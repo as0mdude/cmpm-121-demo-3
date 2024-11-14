@@ -37,7 +37,8 @@ for (let i = -NEIGHBORHOOD_SIZE; i <= NEIGHBORHOOD_SIZE; i++) {
   for (let j = -NEIGHBORHOOD_SIZE; j <= NEIGHBORHOOD_SIZE; j++) {
     const { lat, lng } = OAKES_CLASSROOM;
     const { i: gridI, j: gridJ } = latLongToGrid(
-      lat + i * TILE_DEGREES, lng + j * TILE_DEGREES
+      lat + i * TILE_DEGREES,
+      lng + j * TILE_DEGREES,
     );
     if (cacheFlyweightFactory.shouldSpawnCache(gridI, gridJ)) {
       spawnCache(gridI, gridJ);
@@ -144,10 +145,13 @@ function spawnCache(i: number, j: number): void {
  * Creates a popup element for a cache with coin collection functionality.
  */
 function createCachePopup(i: number, j: number): HTMLDivElement {
-  const initialCoinCount = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
+  const initialCoinCount = Math.floor(
+    luck([i, j, "initialValue"].toString()) * 100,
+  );
   let coinCount = initialCoinCount;
-  const coins = Array.from({ length: initialCoinCount }, (_, serial) =>
-    createCoinId(i, j, serial)
+  const coins = Array.from(
+    { length: initialCoinCount },
+    (_, serial) => createCoinId(i, j, serial),
   );
 
   const popUpDiv = document.createElement("div");
@@ -157,29 +161,33 @@ function createCachePopup(i: number, j: number): HTMLDivElement {
     <button id="deposit">Deposit</button>
   `;
 
-  popUpDiv.querySelector<HTMLButtonElement>("#collect")!.addEventListener("click", () => {
-    if (coinCount > 0) {
-      const coinId = coins.pop();
-      console.log(`Collected coin: ${coinId}`);
-      playerCoins += 1;
-      coinCount -= 1;
-      updateCoinDisplay(popUpDiv, coinCount);
-    }
-  });
+  popUpDiv.querySelector<HTMLButtonElement>("#collect")!.addEventListener(
+    "click",
+    () => {
+      if (coinCount > 0) {
+        const coinId = coins.pop();
+        console.log(`Collected coin: ${coinId}`);
+        playerCoins += 1;
+        coinCount -= 1;
+        updateCoinDisplay(popUpDiv, coinCount);
+      }
+    },
+  );
 
   popUpDiv.querySelector<HTMLButtonElement>("#deposit")!.addEventListener(
-    "click", 
+    "click",
     () => {
-    if (playerCoins > 0) {
-      const serial = initialCoinCount - coinCount;
-      const coinId = createCoinId(i, j, serial);
-      console.log(`Deposited coin: ${coinId}`);
-      playerCoins -= 1;
-      coinCount += 1;
-      coins.push(coinId);
-      updateCoinDisplay(popUpDiv, coinCount);
-    }
-  });
+      if (playerCoins > 0) {
+        const serial = initialCoinCount - coinCount;
+        const coinId = createCoinId(i, j, serial);
+        console.log(`Deposited coin: ${coinId}`);
+        playerCoins -= 1;
+        coinCount += 1;
+        coins.push(coinId);
+        updateCoinDisplay(popUpDiv, coinCount);
+      }
+    },
+  );
 
   return popUpDiv;
 }
@@ -188,6 +196,7 @@ function createCachePopup(i: number, j: number): HTMLDivElement {
  * Updates the coin count display in the popup and the player coins display.
  */
 function updateCoinDisplay(popUpDiv: HTMLDivElement, coinCount: number): void {
-  popUpDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML = coinCount.toString();
+  popUpDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML = coinCount
+    .toString();
   statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
 }
