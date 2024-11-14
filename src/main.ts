@@ -36,7 +36,9 @@ const cacheFlyweightFactory = createCacheFlyweightFactory({
 for (let i = -NEIGHBORHOOD_SIZE; i <= NEIGHBORHOOD_SIZE; i++) {
   for (let j = -NEIGHBORHOOD_SIZE; j <= NEIGHBORHOOD_SIZE; j++) {
     const { lat, lng } = OAKES_CLASSROOM;
-    const { i: gridI, j: gridJ } = latLongToGrid(lat + i * TILE_DEGREES, lng + j * TILE_DEGREES);
+    const { i: gridI, j: gridJ } = latLongToGrid(
+      lat + i * TILE_DEGREES, lng + j * TILE_DEGREES
+    );
     if (cacheFlyweightFactory.shouldSpawnCache(gridI, gridJ)) {
       spawnCache(gridI, gridJ);
     }
@@ -165,7 +167,9 @@ function createCachePopup(i: number, j: number): HTMLDivElement {
     }
   });
 
-  popUpDiv.querySelector<HTMLButtonElement>("#deposit")!.addEventListener("click", () => {
+  popUpDiv.querySelector<HTMLButtonElement>("#deposit")!.addEventListener(
+    "click", 
+    () => {
     if (playerCoins > 0) {
       const serial = initialCoinCount - coinCount;
       const coinId = createCoinId(i, j, serial);

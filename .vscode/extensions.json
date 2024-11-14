@@ -1,7 +1,4 @@
 {
-  "recommendations": [
-    "denoland.vscode-deno",
-    "github.copilot"
-  ],
+  "recommendations": ["denoland.vscode-deno", "github.copilot"],
   "unwantedRecommendations": []
 }
