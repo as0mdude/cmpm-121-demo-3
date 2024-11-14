@@ -3,10 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Geocoin Carrier</title>
   </head>
   <body>
     <div id="app">
       <!-- todo -->
+      <div id="controlPanel">
+        <button id="sensor" title="sensor">🌐</button>
+        <button id="north" title="north">⬆️</button>
+        <button id="south" title="south">⬇️</button>
+        <button id="west" title="west">⬅️</button>
+        <button id="east" title="east">➡️</button>
+        <button id="reset" title="reset">🚮</button>
+      </div>
+      <div id="statusPanel"></div>
+      <div id="map"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
