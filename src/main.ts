@@ -24,7 +24,8 @@ let playerCoins = 0;
 // Initialize map
 const map = initMap();
 const statusPanel = initStatusPanel();
-const playerMarker = createPlayerMarker();
+//const playerMarker = 
+createPlayerMarker();
 
 // Cache Flyweight Factory
 const cacheFlyweightFactory = createCacheFlyweightFactory({
