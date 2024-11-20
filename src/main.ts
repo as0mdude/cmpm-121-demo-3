@@ -115,6 +115,10 @@ class LocationGame {
     { cache: Cache; marker: leaflet.Rectangle }
   > = new Map();
   private gameStateManager: GameStateManager;
+  
+  // New properties for geolocation
+  private watchId: number | null = null;
+  private isAutoLocationEnabled = false;
 
   constructor() {
     this.gameStateManager = new GameStateManager();
@@ -122,6 +126,8 @@ class LocationGame {
     this.initStatusPanel();
     this.initPlayerMarker();
     this.initMovementControls();
+    this.initGeolocationControl();
+    this.initResetControl();
   }
 
   private initMap(): void {
@@ -175,13 +181,111 @@ class LocationGame {
     );
   }
 
+  private initGeolocationControl(): void {
+    const sensorButton = document.getElementById("sensor");
+    if (!sensorButton) return;
+
+    sensorButton.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser");
+        return;
+      }
+
+      if (this.isAutoLocationEnabled) {
+        // Disable geolocation tracking
+        if (this.watchId !== null) {
+          navigator.geolocation.clearWatch(this.watchId);
+          this.watchId = null;
+        }
+        this.isAutoLocationEnabled = false;
+        sensorButton.classList.remove("active");
+        return;
+      }
+
+      // Enable geolocation tracking
+      try {
+        this.watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            this.updatePlayerPosition(latitude, longitude);
+          },
+          (error) => {
+            console.error("Error getting location", error);
+            alert(`Geolocation error: ${error.message}`);
+            this.isAutoLocationEnabled = false;
+            sensorButton.classList.remove("active");
+            if (this.watchId !== null) {
+              navigator.geolocation.clearWatch(this.watchId);
+              this.watchId = null;
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 27000
+          }
+        );
+
+        this.isAutoLocationEnabled = true;
+        sensorButton.classList.add("active");
+      } catch (error) {
+        console.error("Geolocation setup error", error);
+        alert("Failed to start geolocation tracking");
+      }
+    });
+  }
+
+  private initResetControl(): void {
+    document.getElementById("reset")?.addEventListener("click", () => {
+      // Stop geolocation if active
+      if (this.isAutoLocationEnabled && this.watchId !== null) {
+        navigator.geolocation.clearWatch(this.watchId);
+        this.watchId = null;
+        this.isAutoLocationEnabled = false;
+        document.getElementById("sensor")?.classList.remove("active");
+      }
+
+      // Reset to initial position
+      this.updatePlayerPosition(OAKES_CLASSROOM.lat, OAKES_CLASSROOM.lng);
+      
+      // Clear active caches
+      this.activeCaches.forEach((value) => {
+        value.marker.remove();
+      });
+      this.activeCaches.clear();
+
+      // Reset player coins
+      this.playerCoins = 0;
+      this.updateStatusPanel();
+    });
+  }
+
   private movePlayer(latOffset: number, lngOffset: number): void {
+    // Prevent manual movement during auto location
+    if (this.isAutoLocationEnabled) return;
+
     // Update player's position
     this.playerLat += latOffset;
     this.playerLng += lngOffset;
 
     // Update the map and player marker
     this.playerMarker.setLatLng(leaflet.latLng(this.playerLat, this.playerLng));
+
+    // Regenerate visible caches
+    this.updateVisibleCaches();
+  }
+
+  private updatePlayerPosition(lat: number, lng: number): void {
+    // Update player's position
+    this.playerLat = lat;
+    this.playerLng = lng;
+
+    // Update the map and player marker
+    const newLatLng = leaflet.latLng(lat, lng);
+    this.playerMarker.setLatLng(newLatLng);
+
+    // Center the map on the new position
+    this.map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
 
     // Regenerate visible caches
     this.updateVisibleCaches();
