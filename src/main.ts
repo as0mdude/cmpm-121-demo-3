@@ -22,10 +22,10 @@ const CACHE_VISIBILITY_RADIUS = 0.005; // Approximately 500m radius
 // Memento for Cache State
 class CacheMemento {
   constructor(
-    public i: number, 
-    public j: number, 
+    public i: number,
+    public j: number,
     public coinCount: number,
-    public coins: string[]
+    public coins: string[],
   ) {}
 }
 
@@ -35,14 +35,16 @@ class Cache {
   private coins: string[];
 
   constructor(
-    public i: number, 
-    public j: number
+    public i: number,
+    public j: number,
   ) {
-    const initialCoinCount = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
+    const initialCoinCount = Math.floor(
+      luck([i, j, "initialValue"].toString()) * 100,
+    );
     this.coinCount = initialCoinCount;
     this.coins = Array.from(
       { length: initialCoinCount },
-      (_, serial) => this.createCoinId(serial)
+      (_, serial) => this.createCoinId(serial),
     );
   }
 
@@ -53,10 +55,10 @@ class Cache {
   // Create a memento of the current state
   createMemento(): CacheMemento {
     return new CacheMemento(
-      this.i, 
-      this.j, 
-      this.coinCount, 
-      [...this.coins]
+      this.i,
+      this.j,
+      this.coinCount,
+      [...this.coins],
     );
   }
 
@@ -102,13 +104,16 @@ class GameStateManager {
 
 // Main Game Class
 class LocationGame {
-  private map: leaflet.Map;
-  private playerMarker: leaflet.Marker;
-  private statusPanel: HTMLDivElement;
+  private map!: leaflet.Map;
+  private playerMarker!: leaflet.Marker;
+  private statusPanel!: HTMLDivElement;
   private playerCoins = 0;
-  private playerLat: number;
-  private playerLng: number;
-  private activeCaches: Map<string, { cache: Cache, marker: leaflet.Rectangle }> = new Map();
+  private playerLat!: number;
+  private playerLng!: number;
+  private activeCaches: Map<
+    string,
+    { cache: Cache; marker: leaflet.Rectangle }
+  > = new Map();
   private gameStateManager: GameStateManager;
 
   constructor() {
@@ -152,10 +157,22 @@ class LocationGame {
   }
 
   private initMovementControls(): void {
-    document.getElementById("north")?.addEventListener("click", () => this.movePlayer(0.0001, 0));
-    document.getElementById("south")?.addEventListener("click", () => this.movePlayer(-0.0001, 0));
-    document.getElementById("west")?.addEventListener("click", () => this.movePlayer(0, -0.0001));
-    document.getElementById("east")?.addEventListener("click", () => this.movePlayer(0, 0.0001));
+    document.getElementById("north")?.addEventListener(
+      "click",
+      () => this.movePlayer(0.0001, 0),
+    );
+    document.getElementById("south")?.addEventListener(
+      "click",
+      () => this.movePlayer(-0.0001, 0),
+    );
+    document.getElementById("west")?.addEventListener(
+      "click",
+      () => this.movePlayer(0, -0.0001),
+    );
+    document.getElementById("east")?.addEventListener(
+      "click",
+      () => this.movePlayer(0, 0.0001),
+    );
   }
 
   private movePlayer(latOffset: number, lngOffset: number): void {
@@ -173,7 +190,7 @@ class LocationGame {
   private updateVisibleCaches(): void {
     // Remove out-of-range caches
     this.activeCaches.forEach((value, key) => {
-      const [i, j] = key.split(':').map(Number);
+      const [i, j] = key.split(":").map(Number);
       if (!this.isCacheInRange(i, j)) {
         value.marker.remove();
         this.activeCaches.delete(key);
@@ -185,12 +202,15 @@ class LocationGame {
       for (let j = -NEIGHBORHOOD_SIZE; j <= NEIGHBORHOOD_SIZE; j++) {
         const cacheLat = this.playerLat + i * TILE_DEGREES;
         const cacheLng = this.playerLng + j * TILE_DEGREES;
-        
+
         const gridPos = this.latLongToGrid(cacheLat, cacheLng);
         const key = `${gridPos.i}:${gridPos.j}`;
 
         // Skip if cache already exists or shouldn't spawn
-        if (this.activeCaches.has(key) || !this.shouldSpawnCache(gridPos.i, gridPos.j)) {
+        if (
+          this.activeCaches.has(key) ||
+          !this.shouldSpawnCache(gridPos.i, gridPos.j)
+        ) {
           continue;
         }
 
@@ -205,7 +225,9 @@ class LocationGame {
   private isCacheInRange(i: number, j: number): boolean {
     const cacheBounds = this.calculateCacheBounds(i, j);
     const cacheCenter = cacheBounds.getCenter();
-    const distance = leaflet.latLng(this.playerLat, this.playerLng).distanceTo(cacheCenter);
+    const distance = leaflet.latLng(this.playerLat, this.playerLng).distanceTo(
+      cacheCenter,
+    );
     return distance <= CACHE_VISIBILITY_RADIUS * 111320; // Convert degrees to meters
   }
 
@@ -249,7 +271,10 @@ class LocationGame {
     this.activeCaches.set(`${i}:${j}`, { cache, marker: rect });
   }
 
-  private createCachePopup(cache: Cache, rect: leaflet.Rectangle): HTMLDivElement {
+  private createCachePopup(
+    cache: Cache,
+    _rect: leaflet.Rectangle,
+  ): HTMLDivElement {
     const popUpDiv = document.createElement("div");
     popUpDiv.innerHTML = `
       <div>Cache at "${cache.i}, ${cache.j}". Coins: <span id="value">${cache.getCoinCount()}</span>.</div>
@@ -268,7 +293,7 @@ class LocationGame {
           this.updateCoinDisplay(popUpDiv, cache.getCoinCount());
           this.gameStateManager.saveCache(cache);
         }
-      }
+      },
     );
 
     popUpDiv.querySelector<HTMLButtonElement>("#deposit")!.addEventListener(
@@ -283,14 +308,15 @@ class LocationGame {
           this.updateCoinDisplay(popUpDiv, cache.getCoinCount());
           this.gameStateManager.saveCache(cache);
         }
-      }
+      },
     );
 
     return popUpDiv;
   }
 
   private updateCoinDisplay(popUpDiv: HTMLDivElement, coinCount: number): void {
-    popUpDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML = coinCount.toString();
+    popUpDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML = coinCount
+      .toString();
   }
 
   private updateStatusPanel(): void {
