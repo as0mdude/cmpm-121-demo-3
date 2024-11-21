@@ -115,7 +115,7 @@ class LocationGame {
     { cache: Cache; marker: leaflet.Rectangle }
   > = new Map();
   private gameStateManager: GameStateManager;
-  
+
   // New properties for geolocation
   private watchId: number | null = null;
   private isAutoLocationEnabled = false;
@@ -222,8 +222,8 @@ class LocationGame {
           {
             enableHighAccuracy: true,
             maximumAge: 30000,
-            timeout: 27000
-          }
+            timeout: 27000,
+          },
         );
 
         this.isAutoLocationEnabled = true;
@@ -247,7 +247,7 @@ class LocationGame {
 
       // Reset to initial position
       this.updatePlayerPosition(OAKES_CLASSROOM.lat, OAKES_CLASSROOM.lng);
-      
+
       // Clear active caches
       this.activeCaches.forEach((value) => {
         value.marker.remove();
