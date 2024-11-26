@@ -120,11 +120,16 @@ class LocationGame {
   private watchId: number | null = null;
   private isAutoLocationEnabled = false;
 
+  // Movement history properties
+  private movementHistory: leaflet.LatLng[] = [];
+  private movementPolyline: leaflet.Polyline | null = null;
+
   constructor() {
     this.gameStateManager = new GameStateManager();
     this.initMap();
     this.initStatusPanel();
     this.initPlayerMarker();
+    this.initMovementHistory();
     this.initMovementControls();
     this.initGeolocationControl();
     this.initResetControl();
@@ -162,6 +167,41 @@ class LocationGame {
     this.playerMarker.addTo(this.map);
   }
 
+  private initMovementHistory(): void {
+    // Initialize with the starting point
+    this.movementHistory.push(OAKES_CLASSROOM);
+    this.updateMovementPolyline();
+  }
+
+  private updateMovementPolyline(): void {
+    // Remove existing polyline if it exists
+    if (this.movementPolyline) {
+      this.movementPolyline.remove();
+    }
+
+    // Create new polyline with movement history
+    if (this.movementHistory.length > 1) {
+      this.movementPolyline = leaflet.polyline(this.movementHistory, {
+        color: 'blue',
+        weight: 3,
+        opacity: 0.7
+      }).addTo(this.map);
+    }
+  }
+
+  private addMovementPoint(lat: number, lng: number): void {
+    const newPoint = leaflet.latLng(lat, lng);
+    
+    // Prevent duplicate points
+    const lastPoint = this.movementHistory[this.movementHistory.length - 1];
+    if (lastPoint.lat === newPoint.lat && lastPoint.lng === newPoint.lng) {
+      return;
+    }
+
+    this.movementHistory.push(newPoint);
+    this.updateMovementPolyline();
+  }
+
   private initMovementControls(): void {
     document.getElementById("north")?.addEventListener(
       "click",
@@ -185,9 +225,22 @@ class LocationGame {
     const sensorButton = document.getElementById("sensor");
     if (!sensorButton) return;
 
+    // Disable button to prevent spam
+    const disableButton = () => {
+      sensorButton.classList.remove("active");
+      sensorButton.setAttribute("disabled", "true");
+      setTimeout(() => {
+        sensorButton.removeAttribute("disabled");
+      }, 2000); // 2-second cooldown
+    };
+
     sensorButton.addEventListener("click", () => {
+      // Prevent multiple clicks
+      if (sensorButton.hasAttribute("disabled")) return;
+
       if (!navigator.geolocation) {
         alert("Geolocation is not supported by your browser");
+        disableButton();
         return;
       }
 
@@ -198,7 +251,7 @@ class LocationGame {
           this.watchId = null;
         }
         this.isAutoLocationEnabled = false;
-        sensorButton.classList.remove("active");
+        disableButton();
         return;
       }
 
@@ -213,7 +266,8 @@ class LocationGame {
             console.error("Error getting location", error);
             alert(`Geolocation error: ${error.message}`);
             this.isAutoLocationEnabled = false;
-            sensorButton.classList.remove("active");
+            disableButton();
+            
             if (this.watchId !== null) {
               navigator.geolocation.clearWatch(this.watchId);
               this.watchId = null;
@@ -223,7 +277,7 @@ class LocationGame {
             enableHighAccuracy: true,
             maximumAge: 30000,
             timeout: 27000,
-          },
+          }
         );
 
         this.isAutoLocationEnabled = true;
@@ -231,6 +285,7 @@ class LocationGame {
       } catch (error) {
         console.error("Geolocation setup error", error);
         alert("Failed to start geolocation tracking");
+        disableButton();
       }
     });
   }
@@ -257,6 +312,10 @@ class LocationGame {
       // Reset player coins
       this.playerCoins = 0;
       this.updateStatusPanel();
+
+      // Reset movement history
+      this.movementHistory = [OAKES_CLASSROOM];
+      this.updateMovementPolyline();
     });
   }
 
@@ -271,6 +330,9 @@ class LocationGame {
     // Update the map and player marker
     this.playerMarker.setLatLng(leaflet.latLng(this.playerLat, this.playerLng));
 
+    // Add to movement history
+    this.addMovementPoint(this.playerLat, this.playerLng);
+
     // Regenerate visible caches
     this.updateVisibleCaches();
   }
@@ -283,6 +345,9 @@ class LocationGame {
     // Update the map and player marker
     const newLatLng = leaflet.latLng(lat, lng);
     this.playerMarker.setLatLng(newLatLng);
+
+    // Add to movement history
+    this.addMovementPoint(lat, lng);
 
     // Center the map on the new position
     this.map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
