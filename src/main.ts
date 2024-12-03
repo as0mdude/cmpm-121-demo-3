@@ -440,35 +440,43 @@ class LocationGame {
     this.activeCaches.set(`${i}:${j}`, { cache, marker: rect });
   }
 
-  private createCachePopup(
-    cache: Cache,
-    _rect: leaflet.Rectangle,
-  ): HTMLDivElement {
-    const popUpDiv = document.createElement("div");
-    popUpDiv.innerHTML = `
-      <div>Cache at "${cache.i}, ${cache.j}". Coins: <span id="value">${cache.getCoinCount()}</span>.</div>
-      <button id="collect">Collect</button>
-      <button id="deposit">Deposit</button>
-    `;
+  private createCachePopup(cache: Cache, _rect: leaflet.Rectangle): HTMLDivElement {
+    const popUpDiv = this.buildCachePopupUI(cache);
+    this.setupCachePopupEvents(popUpDiv, cache);
+    return popUpDiv;
+  }
 
-    popUpDiv.querySelector<HTMLButtonElement>("#collect")!.addEventListener(
-      "click",
-      () => {
-        const coinId = cache.collect();
-        if (coinId) {
+  private buildCachePopupUI(cache: Cache): HTMLDivElement {
+      const popUpDiv = document.createElement("div");
+      popUpDiv.innerHTML = `
+          <div>Cache at "${cache.i}, ${cache.j}". Coins: <span id="value">${cache.getCoinCount()}</span>.</div>
+          <button id="collect">Collect</button>
+          <button id="deposit">Deposit</button>
+      `;
+      return popUpDiv;
+  }
+
+  private setupCachePopupEvents(popUpDiv: HTMLDivElement, cache: Cache): void {
+      const collectButton = popUpDiv.querySelector<HTMLButtonElement>("#collect")!;
+      const depositButton = popUpDiv.querySelector<HTMLButtonElement>("#deposit")!;
+
+      collectButton.addEventListener("click", () => this.handleCollectClick(cache, popUpDiv));
+      depositButton.addEventListener("click", () => this.handleDepositClick(cache, popUpDiv));
+  }
+
+  private handleCollectClick(cache: Cache, popUpDiv: HTMLDivElement): void {
+      const coinId = cache.collect();
+      if (coinId) {
           console.log(`Collected coin: ${coinId}`);
           this.playerCoins += 1;
           this.updateStatusPanel();
           this.updateCoinDisplay(popUpDiv, cache.getCoinCount());
           this.gameStateManager.saveCache(cache);
-        }
-      },
-    );
+      }
+  }
 
-    popUpDiv.querySelector<HTMLButtonElement>("#deposit")!.addEventListener(
-      "click",
-      () => {
-        if (this.playerCoins > 0) {
+  private handleDepositClick(cache: Cache, popUpDiv: HTMLDivElement): void {
+      if (this.playerCoins > 0) {
           const coinId = `deposited:${cache.i}:${cache.j}:${Date.now()}`;
           cache.deposit(coinId);
           console.log(`Deposited coin: ${coinId}`);
@@ -476,12 +484,9 @@ class LocationGame {
           this.updateStatusPanel();
           this.updateCoinDisplay(popUpDiv, cache.getCoinCount());
           this.gameStateManager.saveCache(cache);
-        }
-      },
-    );
-
-    return popUpDiv;
+      }
   }
+
 
   private updateCoinDisplay(popUpDiv: HTMLDivElement, coinCount: number): void {
     popUpDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML = coinCount
